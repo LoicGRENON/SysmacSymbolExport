@@ -1,33 +1,7 @@
 import csv
-import xml.etree.ElementTree as ET
-from typing import Dict, Tuple
 
 from sysmac_solution import SysmacSolution
 
-
-def get_solutions(solutions_path: 'Path') -> Tuple[dict[str, str], ...]:
-    return tuple([get_solution_properties(s) for s in solutions_path.glob('*/')])
-
-def get_solution_properties(solution_path: 'Path') -> Dict[str, str]:
-    tree = ET.parse(solution_path / f'{solution_path.name}.xml')
-    root = tree.getroot()
-
-    project_type = root.find('.//ProjectType')
-    author = root.find('.//Author')
-    last_modified = root.find('.//DateModified')
-
-    tree = ET.parse(solution_path / f'{solution_path.name}.oem')
-    root = tree.getroot()
-    solution_element = root.find(".//Entity[@type='Solution']")
-    solution_name = solution_element.attrib.get('name') if solution_element is not None else None
-
-    return {
-        'uuid': solution_path.name,
-        'name': solution_name,
-        'author': author.text,
-        'project_type': project_type.text,
-        'last_modified': last_modified.text
-    }
 
 def export_symbols_to_file(symbols, filename):
     symbols_data = [
@@ -49,6 +23,7 @@ def export_symbols_to_file(symbols, filename):
 
 if __name__ == '__main__':
     from pathlib import Path
+    from sysmac_solution import get_solutions
 
     # Production path should be "C:\OMRON\Solution" (or other, depending on the installation directory maybe)
     solutions_path = Path("../assets/Solution")

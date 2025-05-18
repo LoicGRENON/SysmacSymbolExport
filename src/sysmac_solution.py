@@ -7,6 +7,9 @@ from sysmac_array import SysmacArray
 from sysmac_data_type import SysmacDataType
 
 
+def get_solutions(solutions_path: 'Path') -> List['SysmacSolution']:
+    return [SysmacSolution(solutions_path, s.stem) for s in solutions_path.glob('*/')]
+
 def parse_slwd(file_path) -> List[Dict[str, str]]:
     variables = []
     with open(file_path, "r", encoding="utf-8") as file:
@@ -53,19 +56,66 @@ def _get_enum_from_namespace(xml_root: Element, namespace: str):
 
 
 class SysmacSolution:
-    def __init__(self, solutions_path, name):
+    def __init__(self, solutions_path, uuid):
         self.solutions_path = solutions_path
-        self.name = name
+        self._uuid = uuid
+        self._name = ''
+        self._author = ''
+        self._project_type = ''
+        self._last_modified = '' # TODO: Change this
         self.global_vars = []
 
+        self.get_properties()
+
+    @property
+    def author(self):
+        return self._author
+
+    @property
+    def last_modified(self):
+        return self._last_modified
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def project_type(self):
+        return self._project_type
+
+    @property
+    def uuid(self):
+        return self._uuid
+
     def get_global_vars(self) -> List[SysmacDataType]:
-        project_oem_file = f'{self.name}.oem'
-        tree = ET.parse(self.solutions_path / self.name / project_oem_file)
+        project_oem_file = f'{self._uuid}.oem'
+        tree = ET.parse(self.solutions_path / self._uuid / project_oem_file)
         root = tree.getroot()
         global_vars_file_name = root.find(".//Entity[@type='Variables'][@subtype='Global']").attrib.get('id')
         self.global_vars = [SysmacDataType.import_from_slwd(symbol)
-                            for symbol in parse_slwd(self.solutions_path / self.name / f"{global_vars_file_name}.xml")]
+                            for symbol in parse_slwd(self.solutions_path / self._uuid / f"{global_vars_file_name}.xml")]
         return self.global_vars
+
+    def get_properties(self) -> Dict[str, str]:
+        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.xml')
+        root = tree.getroot()
+
+        self._project_type = root.find('.//ProjectType').text
+        self._author = root.find('.//Author').text
+        self._last_modified = root.find('.//DateModified').text
+
+        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.oem')
+        root = tree.getroot()
+        solution_element = root.find(".//Entity[@type='Solution']")
+        self._name = solution_element.attrib.get('name') if solution_element is not None else ''
+
+        return {
+            'uuid': self._uuid,
+            'name': self._name,
+            'author': self._author,
+            'project_type': self._project_type,
+            'last_modified': self._last_modified
+        }
 
     def get_published_symbols(self) -> List[SysmacDataType]:
         base_type_symbols = []
@@ -98,7 +148,7 @@ class SysmacSolution:
                 user_type_symbols.append(s)
             else:
                 # TODO: Log this as we should never get here !
-                print(f"{s.name} - {s.base_type} - has been skipped !!")
+                print(f"{s.uuid} - {s.base_type} - has been skipped !!")
 
         # Custom type symbols are added to user_type_symbols list
         # Go through that list to expand the variables till getting the members from base type.
@@ -138,8 +188,8 @@ class SysmacSolution:
         return base_type_symbols
 
     def _get_data_types(self) -> Dict[str, SysmacDataType]:
-        project_oem_file = f'{self.name}.oem'
-        tree = ET.parse(self.solutions_path / self.name / project_oem_file)
+        project_oem_file = f'{self._uuid}.oem'
+        tree = ET.parse(self.solutions_path / self._uuid / project_oem_file)
         root = tree.getroot()
 
         dt = {}
@@ -150,7 +200,7 @@ class SysmacSolution:
 
     def _get_data_from_namespace(self, datatype_id, namespace=None) -> Dict[str, SysmacDataType]:
         datatype_file = f"{datatype_id}.xml"
-        tree = ET.parse(self.solutions_path / self.name / datatype_file)
+        tree = ET.parse(self.solutions_path / self._uuid / datatype_file)
         root = tree.getroot()
 
         data = _get_struct_from_namespace(root, namespace)
