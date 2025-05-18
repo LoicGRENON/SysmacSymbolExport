@@ -1,7 +1,6 @@
 import copy
 import xml.etree.ElementTree as ET
 from typing import Dict, List
-from xml.dom.minidom import Element
 
 from sysmac_array import SysmacArray
 from sysmac_data_type import SysmacDataType
@@ -30,7 +29,7 @@ def parse_slwd(file_path) -> List[Dict[str, str]]:
             variables.append(var_data)
     return variables
 
-def _get_struct_from_namespace(xml_root: Element, namespace: str):
+def _get_struct_from_namespace(xml_root: ET.Element, namespace: str):
     data = {}
     for type_def in xml_root.findall(".//DataType[@BaseType='STRUCT']"):
         data_type = SysmacDataType.import_from_xml(type_def, namespace=namespace)
@@ -44,7 +43,7 @@ def _get_struct_from_namespace(xml_root: Element, namespace: str):
             data[f'{data_type.name}'] = data_type
     return data
 
-def _get_enum_from_namespace(xml_root: Element, namespace: str):
+def _get_enum_from_namespace(xml_root: ET.Element, namespace: str):
     data = {}
     for type_def in xml_root.findall(".//DataType[@BaseType='ENUM']"):
         data_type = SysmacDataType.import_from_xml(type_def, namespace=namespace)
