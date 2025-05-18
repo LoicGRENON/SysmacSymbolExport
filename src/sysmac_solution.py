@@ -1,5 +1,6 @@
 import copy
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from typing import Dict, List
 
 from sysmac_array import SysmacArray
@@ -61,10 +62,10 @@ class SysmacSolution:
         self._name = ''
         self._author = ''
         self._project_type = ''
-        self._last_modified = '' # TODO: Change this
+        self._last_modified = datetime.fromtimestamp(0)
         self.global_vars = []
 
-        self.get_properties()
+        self._get_properties()
 
     @property
     def author(self):
@@ -94,27 +95,6 @@ class SysmacSolution:
         self.global_vars = [SysmacDataType.import_from_slwd(symbol)
                             for symbol in parse_slwd(self.solutions_path / self._uuid / f"{global_vars_file_name}.xml")]
         return self.global_vars
-
-    def get_properties(self) -> Dict[str, str]:
-        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.xml')
-        root = tree.getroot()
-
-        self._project_type = root.find('.//ProjectType').text
-        self._author = root.find('.//Author').text
-        self._last_modified = root.find('.//DateModified').text
-
-        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.oem')
-        root = tree.getroot()
-        solution_element = root.find(".//Entity[@type='Solution']")
-        self._name = solution_element.attrib.get('name') if solution_element is not None else ''
-
-        return {
-            'uuid': self._uuid,
-            'name': self._name,
-            'author': self._author,
-            'project_type': self._project_type,
-            'last_modified': self._last_modified
-        }
 
     def get_published_symbols(self) -> List[SysmacDataType]:
         base_type_symbols = []
@@ -205,3 +185,16 @@ class SysmacSolution:
         data = _get_struct_from_namespace(root, namespace)
         data |= _get_enum_from_namespace(root, namespace)
         return data
+
+    def _get_properties(self):
+        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.xml')
+        root = tree.getroot()
+
+        self._project_type = root.find('.//ProjectType').text
+        self._author = root.find('.//Author').text
+        self._last_modified = datetime.fromisoformat(root.find('.//DateModified').text)
+
+        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.oem')
+        root = tree.getroot()
+        solution_element = root.find(".//Entity[@type='Solution']")
+        self._name = solution_element.attrib.get('name') if solution_element is not None else ''
