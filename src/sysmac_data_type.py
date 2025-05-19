@@ -29,7 +29,7 @@ class SysmacDataType:
         self.namespace = None
         self.parent = None
         self.defined = False
-        self.children = None
+        self.children = []
         self.network_publish = None
 
         self.name = None
@@ -69,6 +69,9 @@ class SysmacDataType:
         self.is_controller_defined_type = xml_element.get('IsControllerDefinedType')
         self.order = xml_element.get('Order')
         self.offset_type = xml_element.get('OffsetType')
+
+        self.children = [SysmacDataType.import_from_xml(child_datatype_elmt, namespace=namespace, parent=self)
+                         for child_datatype_elmt in xml_element.findall(".//DataType")]
         return self
 
     def _parse_slwd(self, slwd_dict, namespace=None, parent=None):

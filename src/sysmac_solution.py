@@ -34,10 +34,6 @@ def _get_struct_from_namespace(xml_root: ET.Element, namespace: str):
     data = {}
     for type_def in xml_root.findall(".//DataType[@BaseType='STRUCT']"):
         data_type = SysmacDataType.import_from_xml(type_def, namespace=namespace)
-        # TODO: children can probably be retrieved directly from SysmacDataType.import_from_xml method
-        data_type.children = [SysmacDataType.import_from_xml(child, namespace=namespace, parent=data_type)
-                              for child in type_def.findall(".//DataType")]
-
         if data_type.namespace is not None:
             data[f'{data_type.namespace}\\{data_type.name}'] = data_type
         else:
