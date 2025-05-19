@@ -9,6 +9,7 @@ def export_symbols_to_file(symbols, filename):
             'NAME': s.name,
             'DATATYPE': s.base_type,
             'COMMENT': s.comment,
+            'TAGLINK': 'TRUE',
             'RW': 'RW',
         }
         for s in symbols
@@ -32,6 +33,7 @@ if __name__ == '__main__':
     # TODO: Let the user to select which project to use
     # selected_project_uid = '665cc97e-6a2c-4394-a631-1a07a8708a92'
     selected_project_uid = '2e436523-51e9-41e3-9736-4d6ab40803c1'
+    # selected_project_uid = '9e691674-c5bb-45f6-9030-14b61030d1f5'
 
     solution = SysmacSolution(solutions_path, selected_project_uid)
     symbols = solution.get_published_symbols()
