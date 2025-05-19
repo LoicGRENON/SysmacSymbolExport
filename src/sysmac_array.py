@@ -63,6 +63,16 @@ class SysmacArray:
         dim = [range(d.lower, d.upper + 1) for d in self._dimensions]
         dim_values = product(*dim)
 
+        # Array of base type -> Do not expand more
+        #  eg: It should return "aCptNDef" from type "USINT[0..19,1..2]"
+        #  instead of "aCptNDef[0,1]", "aCptNDef[0,2], ..." from type "USINT"
+        if self._base_type in BASE_TYPES:
+            ranges = ','.join([f'{self._dimensions[i].lower}..{self._dimensions[i].upper}'
+                               for i, d in enumerate(self._dimensions)])
+            self.symbol.base_type = f'{self._base_type}[{ranges}]'
+            return [self.symbol]
+
+        # Array of user type -> Each index of the array is a symbol for further expanding
         res = []
         for d in dim_values:
             new_symbol = copy.deepcopy(self.symbol)
