@@ -168,9 +168,13 @@ class SysmacSolution:
         root = tree.getroot()
 
         dt = {}
-        for type_def in root.findall(".//Entity[@type='DataType']"):
-            # Extend the dictionary with new values
-            dt |= self._get_data_from_namespace(type_def.get('id'), type_def.get('namespace'))
+        for entity in root.iter('Entity'):
+            if entity.get('type') == 'Group' and entity.get('subtype') == 'IecData':
+                for child in entity.find('ChildEntities'):
+                    if child.tag == 'Entity' and child.get('type') == 'DataType':
+                        # Extend the dictionary with new values
+                        dt |= self._get_data_from_namespace(child.get('id'), child.get('namespace'))
+
         return dt
 
     def _get_data_from_namespace(self, datatype_id, namespace=None) -> Dict[str, SysmacDataType]:
