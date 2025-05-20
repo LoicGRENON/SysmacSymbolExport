@@ -1,10 +1,14 @@
 import copy
+import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Dict, List
 
 from sysmac_array import SysmacArray
 from sysmac_data_type import SysmacDataType
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_solutions(solutions_path: 'Path') -> List['SysmacSolution']:
@@ -122,8 +126,7 @@ class SysmacSolution:
             elif s.base_type in dt.keys():
                 user_type_symbols.append(s)
             else:
-                # TODO: Log this as we should never get here !
-                print(f"{s.uuid} - {s.base_type} - has been skipped !!")
+                logger.info(f'"{s.name}" symbol of type <{s.base_type}> has been skipped !!)')
 
         # Custom type symbols are added to user_type_symbols list
         # Go through that list to expand the variables till getting the members from base type.
@@ -156,8 +159,7 @@ class SysmacSolution:
                         else:
                             user_type_symbols.append(new_symbol)
             else:
-                # TODO: Log this as we should never get here !
-                print(f"{s} - {s.base_type} has been skipped !!")
+                logger.info(f'"{s.name}" symbol of type <{s.base_type}> has been skipped !!)')
 
         base_type_symbols.sort(key=lambda x: x.name)
         return base_type_symbols

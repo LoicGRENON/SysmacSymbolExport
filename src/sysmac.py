@@ -1,6 +1,10 @@
 import csv
+import logging
 
 from sysmac_solution import SysmacSolution
+
+
+logger = logging.getLogger(__name__)
 
 
 def export_symbols_to_file(symbols, filename):
@@ -25,6 +29,8 @@ def export_symbols_to_file(symbols, filename):
 if __name__ == '__main__':
     from pathlib import Path
     from sysmac_solution import get_solutions
+
+    logging.basicConfig(level=logging.DEBUG)
 
     # Production path should be "C:\OMRON\Solution" (or other, depending on the installation directory maybe)
     solutions_path = Path("../assets/Solution")
