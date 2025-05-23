@@ -23,6 +23,15 @@ BASE_TYPES = [
 ]
 
 
+def _parse_comment(comment_value):
+    # In the SLWD file, 'Com' field seems to contain the comment of the global variable as well as its group name.
+    # '$t$t$t$t' seems to be used as separator.
+    if comment_value:
+        comment_data = comment_value.split('$t$t$t$t')
+        return comment_data[0]
+    return ''
+
+
 class SysmacDataType:
 
     def __init__(self):
@@ -84,7 +93,7 @@ class SysmacDataType:
         self.length = None
         self.initial_value = slwd_dict.get('IV')
         self.enum_value = None  # TODO: Vérifier la déclaration d'un type Enum dans les variables globales
-        self.comment = slwd_dict.get('Com')
+        self.comment = _parse_comment(slwd_dict.get('Com'))
         self.offset_channel = None
         self.offset_bit = None
         self.is_controller_defined_type = False
