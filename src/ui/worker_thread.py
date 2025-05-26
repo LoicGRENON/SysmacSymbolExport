@@ -1,7 +1,7 @@
 import queue
 import threading
 
-from src.sysmac import export_symbols_to_file
+from src.utils import export_symbols_to_file
 from src.sysmac_solution import SysmacSolution, get_solutions
 
 

@@ -8,55 +8,10 @@ from typing import Dict, List
 
 from sysmac_array import SysmacArray
 from sysmac_data_type import SysmacDataType
+from utils import parse_slwd, get_enum_from_namespace, get_struct_from_namespace
 
 
 logger = logging.getLogger(__name__)
-
-
-def get_solutions(solutions_path: str | bytes | PathLike) -> List['SysmacSolution']:
-    solutions = [SysmacSolution(solutions_path, s.stem) for s in Path(solutions_path).glob('*/')]
-    # Sort the project by last modification date by descending (most recently modified first)
-    return sorted(solutions, key=lambda x: x.last_modified, reverse=True)
-
-def parse_slwd(file_path) -> List[Dict[str, str]]:
-    variables = []
-    with open(file_path, "r", encoding="utf-8") as file:
-        for line in file:
-            if not line.startswith("++D="):
-                continue  # Skip headers
-
-            # Remove the leading "++D=" and then split by tabs
-            line_cleaned = line.strip()[4:]
-            parts = line_cleaned.split('\t')
-
-            var_data = {'D': parts[0]}   # The first element is the type (D)
-            # The other values follow a key=value pattern
-            for part in parts[1:]:
-                if "=" in part:
-                    key, value = part.split("=", 1)
-                    var_data[key] = value
-            variables.append(var_data)
-    return variables
-
-def _get_struct_from_namespace(xml_root: ET.Element, namespace: str):
-    data = {}
-    for type_def in xml_root.findall(".//DataType[@BaseType='STRUCT']"):
-        data_type = SysmacDataType.import_from_xml(type_def, namespace=namespace)
-        if data_type.namespace is not None:
-            data[f'{data_type.namespace}\\{data_type.name}'] = data_type
-        else:
-            data[f'{data_type.name}'] = data_type
-    return data
-
-def _get_enum_from_namespace(xml_root: ET.Element, namespace: str):
-    data = {}
-    for type_def in xml_root.findall(".//DataType[@BaseType='ENUM']"):
-        data_type = SysmacDataType.import_from_xml(type_def, namespace=namespace)
-        if data_type.namespace is not None:
-            data[f'{data_type.namespace}\\{data_type.name}'] = data_type
-        else:
-            data[f'{data_type.name}'] = data_type
-    return data
 
 
 class SysmacSolution:
@@ -188,8 +143,8 @@ class SysmacSolution:
         tree = ET.parse(self.solutions_path / self._uuid / datatype_file)
         root = tree.getroot()
 
-        data = _get_struct_from_namespace(root, namespace)
-        data |= _get_enum_from_namespace(root, namespace)
+        data = get_struct_from_namespace(root, namespace)
+        data |= get_enum_from_namespace(root, namespace)
         return data
 
     def _get_properties(self):
@@ -207,3 +162,33 @@ class SysmacSolution:
         root = tree.getroot()
         solution_element = root.find(".//Entity[@type='Solution']")
         self._name = solution_element.attrib.get('name') if solution_element is not None else ''
+
+
+def get_solutions(solutions_path: str | bytes | PathLike) -> List[SysmacSolution]:
+    solutions = [SysmacSolution(solutions_path, s.stem) for s in Path(solutions_path).glob('*/')]
+    # Sort the project by last modification date by descending (most recently modified first)
+    return sorted(solutions, key=lambda x: x.last_modified, reverse=True)
+
+
+if __name__ == '__main__':
+
+    from utils import export_symbols_to_file
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    # Production path should be "C:\OMRON\Solution" (or other, depending on the installation directory maybe)
+    solutions_path = Path("../assets/Solution")
+    solutions = get_solutions(solutions_path)
+
+    # selected_project_uid = '665cc97e-6a2c-4394-a631-1a07a8708a92'
+    # selected_project_uid = '2e436523-51e9-41e3-9736-4d6ab40803c1'
+    # selected_project_uid = '9e691674-c5bb-45f6-9030-14b61030d1f5'
+    selected_project_uid = 'dcacd5ee-2a81-4251-adb0-8fbbd589108a'
+
+    solution = SysmacSolution(solutions_path, selected_project_uid)
+    symbols = solution.get_published_symbols()
+    for s in symbols:
+        print(f'{s.name} - {s.base_type} - {s.comment}')
+    print(f'{len(symbols)} symbols found')
+
+    export_symbols_to_file(symbols, '../assets/symbols.txt')
