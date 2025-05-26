@@ -2,6 +2,8 @@ import copy
 import logging
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from os import PathLike
+from pathlib import Path
 from typing import Dict, List
 
 from sysmac_array import SysmacArray
@@ -11,8 +13,10 @@ from sysmac_data_type import SysmacDataType
 logger = logging.getLogger(__name__)
 
 
-def get_solutions(solutions_path: 'Path') -> List['SysmacSolution']:
-    return [SysmacSolution(solutions_path, s.stem) for s in solutions_path.glob('*/')]
+def get_solutions(solutions_path: str | bytes | PathLike) -> List['SysmacSolution']:
+    solutions = [SysmacSolution(solutions_path, s.stem) for s in Path(solutions_path).glob('*/')]
+    # Sort the project by last modification date by descending (most recently modified first)
+    return sorted(solutions, key=lambda x: x.last_modified, reverse=True)
 
 def parse_slwd(file_path) -> List[Dict[str, str]]:
     variables = []
@@ -57,7 +61,7 @@ def _get_enum_from_namespace(xml_root: ET.Element, namespace: str):
 
 class SysmacSolution:
     def __init__(self, solutions_path, uuid):
-        self.solutions_path = solutions_path
+        self.solutions_path = Path(solutions_path)
         self._uuid = uuid
         self._name = ''
         self._author = ''
@@ -91,9 +95,9 @@ class SysmacSolution:
         project_oem_file = f'{self._uuid}.oem'
         tree = ET.parse(self.solutions_path / self._uuid / project_oem_file)
         root = tree.getroot()
-        global_vars_file_name = root.find(".//Entity[@type='Variables'][@subtype='Global']").attrib.get('id')
+        global_vars_filename = root.find(".//Entity[@type='Variables'][@subtype='Global']").attrib.get('id')
         self.global_vars = [SysmacDataType.import_from_slwd(symbol)
-                            for symbol in parse_slwd(self.solutions_path / self._uuid / f"{global_vars_file_name}.xml")]
+                            for symbol in parse_slwd(self.solutions_path / self._uuid / f"{global_vars_filename}.xml")]
         return self.global_vars
 
     def get_published_symbols(self) -> List[SysmacDataType]:
@@ -189,7 +193,10 @@ class SysmacSolution:
         return data
 
     def _get_properties(self):
-        tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.xml')
+        try:
+            tree = ET.parse(self.solutions_path / self._uuid / f'{self._uuid}.xml')
+        except FileNotFoundError as e:
+            return
         root = tree.getroot()
 
         self._project_type = root.find('.//ProjectType').text
