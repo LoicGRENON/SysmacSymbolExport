@@ -1,8 +1,8 @@
 import queue
 import threading
 
-from ..sysmac import export_symbols_to_file
-from ..sysmac_solution import SysmacSolution, get_solutions
+from src.sysmac import export_symbols_to_file
+from src.sysmac_solution import SysmacSolution, get_solutions
 
 
 def get_vars_from_solution(solutions_path, solution_uuid):

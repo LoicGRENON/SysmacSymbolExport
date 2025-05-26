@@ -4,10 +4,10 @@ import tkinter as tk
 from tkinter.filedialog import askdirectory, asksaveasfilename
 from tkinter import messagebox, ttk
 
-from ui.projects_treeview import ProjectsTreeview
-from ui.status_bar import StatusBar
-from ui.symbols_dialog import SymbolsDialog
-from ui.worker_thread import WorkerThread
+from ui import ProjectsTreeview
+from ui import StatusBar
+from ui import SymbolsDialog
+from ui import WorkerThread
 
 
 logger = logging.getLogger(__name__)

@@ -38,8 +38,9 @@ if __name__ == '__main__':
 
     # TODO: Let the user to select which project to use
     # selected_project_uid = '665cc97e-6a2c-4394-a631-1a07a8708a92'
-    selected_project_uid = '2e436523-51e9-41e3-9736-4d6ab40803c1'
+    # selected_project_uid = '2e436523-51e9-41e3-9736-4d6ab40803c1'
     # selected_project_uid = '9e691674-c5bb-45f6-9030-14b61030d1f5'
+    selected_project_uid = 'dcacd5ee-2a81-4251-adb0-8fbbd589108a'
 
     solution = SysmacSolution(solutions_path, selected_project_uid)
     symbols = solution.get_published_symbols()
