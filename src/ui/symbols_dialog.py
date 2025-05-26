@@ -24,6 +24,7 @@ class SymbolsDialog(tk.Toplevel):
 
     def export_symbols(self):
         saveasfilename = asksaveasfilename(
+            initialfile=f'{self.solution.name}_symbols',
             defaultextension='.txt',
             filetypes=[('txt files', '.txt'), ('All files', '.*')]
         )
