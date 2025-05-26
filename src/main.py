@@ -28,6 +28,7 @@ class AppUi(tk.Tk):
 
         # UI
         self.title(f"Sysmac global variables export - V{__version__}")
+        self.iconbitmap('../SysmacSymbolExport.ico')
         self.main_frm = ttk.Frame(self, padding=10)
         self.symbols_dialog = None
 
