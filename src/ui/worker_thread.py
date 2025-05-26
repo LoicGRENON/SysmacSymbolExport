@@ -20,22 +20,22 @@ class WorkerThread(threading.Thread):
     def run(self):
         while True:
             try:
-                command, args = self.task_queue.get(timeout=1)
+                command, cmd_args = self.task_queue.get(timeout=1)
                 if command == 'get_solutions':
-                    solutions_path = args[0]
+                    solutions_path = cmd_args[0]
                     data = get_solutions(solutions_path)
                     self.result_queue.put((command, data))
                 elif command == 'get_vars_from_solution':
-                    solution, symbols = get_vars_from_solution(*args)
+                    solution, symbols = get_vars_from_solution(*cmd_args)
                     data = {
                         'solution': solution,
                         'symbols': symbols
                     }
                     self.result_queue.put((command, data))
                 elif command == 'save_symbols_to_file':
-                    solution = args[0]
-                    symbols = args[1]
-                    filename = args[2]
+                    solution = cmd_args[0]
+                    symbols = cmd_args[1]
+                    filename = cmd_args[2]
                     export_symbols_to_file(symbols, filename)
                     data = {
                         'solution': solution,
