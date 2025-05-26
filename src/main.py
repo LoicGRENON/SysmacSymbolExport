@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter.filedialog import askdirectory, asksaveasfilename
 from tkinter import messagebox, ttk
 
+from src import __version__
 from ui import ProjectsTreeview
 from ui import StatusBar
 from ui import SymbolsDialog
@@ -40,7 +41,7 @@ class AppUi(tk.Tk):
         self.worker.start()
 
         # UI
-        self.title("Sysmac global variables export")
+        self.title(f"Sysmac global variables export - V{__version__}")
         self.main_frm = ttk.Frame(self, padding=10)
         self.symbols_dialog = None
 
