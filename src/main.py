@@ -1,8 +1,8 @@
 import logging
 import queue
 import tkinter as tk
-from tkinter.filedialog import askdirectory, asksaveasfilename
-from tkinter import messagebox, ttk
+from tkinter.filedialog import askdirectory
+from tkinter import ttk
 
 from src import __version__
 from ui import ProjectsTreeview
@@ -12,20 +12,6 @@ from ui import WorkerThread
 
 
 logger = logging.getLogger(__name__)
-
-
-def ask_for_overwrite(filepath):
-    """If file exists, prompt for overwrite or to select another filepath"""
-    if filepath.exists():
-        overwrite = messagebox.askquestion(
-            "Overwrite existing target file",
-            f"The selected target file {filepath} already exists on your filesystem.\n\n"
-            f"Press 'YES' if you wish to overwrite it or 'NO' to select another filename",
-            type=messagebox.YESNO)
-
-        if overwrite == messagebox.NO:
-            return asksaveasfilename(filetypes=[('CSV files', '.csv'), ('All files', '.*')])
-    return filepath
 
 
 class AppUi(tk.Tk):
