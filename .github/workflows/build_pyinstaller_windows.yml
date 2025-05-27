@@ -5,6 +5,9 @@ on:
     types: [published]     # Trigger on GitHub release
   workflow_dispatch:       # Manual trigger from GitHub UI
 
+permissions:
+  contents: write  # Required to upload release assets
+  
 jobs:
   build:
     runs-on: windows-latest
@@ -36,7 +39,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist\SysmacSymbolExport.exe
+            dist/SysmacSymbolExport.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -45,4 +48,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: SysmacSymbolExport.exe
-          path: dist\SysmacSymbolExport.exe
+          path: dist/SysmacSymbolExport.exe
