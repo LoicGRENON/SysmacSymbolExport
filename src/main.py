@@ -9,6 +9,7 @@ from ui import ProjectsTreeview
 from ui import StatusBar
 from ui import SymbolsDialog
 from ui import WorkerThread
+from utils import is_pyinstaller_bundle, resource_path
 
 
 logger = logging.getLogger(__name__)
@@ -27,8 +28,12 @@ class AppUi(tk.Tk):
         self.worker.start()
 
         # UI
+        if is_pyinstaller_bundle():
+            iconbitmap = resource_path('SysmacSymbolExport.ico')
+        else:
+            iconbitmap = '../SysmacSymbolExport.ico'
+        self.iconbitmap(iconbitmap)
         self.title(f"Sysmac global variables export - V{__version__}")
-        self.iconbitmap('../SysmacSymbolExport.ico')
         self.main_frm = ttk.Frame(self, padding=10)
         self.symbols_dialog = None
 

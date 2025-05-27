@@ -5,7 +5,9 @@ a = Analysis(
     ['src\\main.py'],
     pathex=['src\\'],
     binaries=[],
-    datas=[],
+    datas=[
+        ('SysmacSymbolExport.ico','.')
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -14,7 +16,6 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-a.datas += [('SysmacSymbolExport.ico','SysmacSymbolExport.ico','DATA')]
 pyz = PYZ(a.pure)
 
 exe = EXE(

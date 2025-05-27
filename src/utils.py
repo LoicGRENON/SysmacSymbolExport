@@ -1,4 +1,6 @@
 import csv
+import os
+import sys
 import xml.etree.ElementTree as ET
 from typing import Dict, List
 
@@ -22,6 +24,9 @@ def export_symbols_to_file(symbols, filename):
         writer = csv.DictWriter(f, delimiter='\t', fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(symbols_data)
+
+def is_pyinstaller_bundle():
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 def get_struct_from_namespace(xml_root: ET.Element, namespace: str):
     data = {}
@@ -62,3 +67,8 @@ def parse_slwd(file_path) -> List[Dict[str, str]]:
                     var_data[key] = value
             variables.append(var_data)
     return variables
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, mandatory for PyInstaller in one-file mode bundle """
+    base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_path, relative_path)
