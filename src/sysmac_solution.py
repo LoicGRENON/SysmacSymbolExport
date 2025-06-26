@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from sysmac_array import SysmacArray
-from sysmac_data_type import SysmacDataType
+from sysmac_data_type import SysmacDataType, get_internal_type
 from utils import parse_slwd, get_enum_from_namespace, get_struct_from_namespace
 
 
@@ -71,11 +71,17 @@ class SysmacSolution:
 
             if s.is_base_type:
                 base_type_symbols.append(s)
+            elif s.is_internal_type:
+                # TODO
+                raise NotImplementedError()
             elif s.is_array:
                 array_symbol = SysmacArray(s)
                 array_vars = array_symbol.expand()
                 if array_symbol.is_base_type:
                     base_type_symbols.extend(array_vars)
+                elif array_symbol.is_internal_type:
+                    # TODO
+                    raise NotImplementedError()
                 else:
                     user_type_symbols.extend(array_vars)
             # TODO: Check what happens for a global variable derived from type ENUM
@@ -94,11 +100,17 @@ class SysmacSolution:
             if s.is_base_type:
                 base_type_symbols.append(s)
                 continue
+            elif s.is_internal_type:
+                # TODO
+                raise NotImplementedError()
             elif s.is_array:
                 array_symbol = SysmacArray(s)
                 array_vars = array_symbol.expand()
                 if array_symbol.is_base_type:
                     base_type_symbols.extend(array_vars)
+                elif array_symbol.is_internal_type:
+                    # TODO
+                    raise NotImplementedError()
                 else:
                     user_type_symbols.extend(array_vars)
                 continue
@@ -115,6 +127,14 @@ class SysmacSolution:
                         new_symbol.name = f'{s.name}.{child.name}'
                         if child.is_base_type:
                             base_type_symbols.append(new_symbol)
+                        elif child.is_internal_type:
+                            root = ET.fromstring(get_internal_type(child.base_type))
+                            new_symbols = [SysmacDataType.import_from_xml(elmt,
+                                                                          namespace=child.namespace,
+                                                                          parent=new_symbol,
+                                                                          prefix=f'{s.name}.{child.name}')
+                                           for elmt in root.findall(".//DataType")]
+                            user_type_symbols.extend(new_symbols)
                         else:
                             user_type_symbols.append(new_symbol)
             else:
@@ -183,7 +203,8 @@ if __name__ == '__main__':
     # selected_project_uid = '665cc97e-6a2c-4394-a631-1a07a8708a92'
     # selected_project_uid = '2e436523-51e9-41e3-9736-4d6ab40803c1'
     # selected_project_uid = '9e691674-c5bb-45f6-9030-14b61030d1f5'
-    selected_project_uid = 'dcacd5ee-2a81-4251-adb0-8fbbd589108a'
+    # selected_project_uid = 'dcacd5ee-2a81-4251-adb0-8fbbd589108a'
+    selected_project_uid = 'e57b7783-9640-42f8-a886-7c1e19aa77fc'
 
     solution = SysmacSolution(solutions_path, selected_project_uid)
     symbols = solution.get_published_symbols()

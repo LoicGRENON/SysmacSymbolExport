@@ -1,4 +1,6 @@
 
+from internal_types import *
+
 BASE_TYPES = [
     'BOOL',
     'BYTE',
@@ -21,6 +23,17 @@ BASE_TYPES = [
     'USINT',
     'WORD'
 ]
+
+INTERNAL_TYPES = {
+    '_sAXIS_REF_STA'        : sAXIS_REF_STA,
+    '_sAXIS_REF_DET'        : sAXIS_REF_DET,
+    '_sAXIS_REF_STA_DRV'    : sAXIS_REF_STA_DRV,
+    '_sMC_REF_EVENT'        : sMC_REF_EVENT
+}
+
+
+def get_internal_type(key):
+    return INTERNAL_TYPES[key]
 
 
 def _parse_comment(comment_value):
@@ -63,10 +76,10 @@ class SysmacDataType:
             else:
                 return f'{self.__class__.__name__}({self.name})'
 
-    def _parse_xml(self, xml_element, namespace=None, parent=None):
+    def _parse_xml(self, xml_element, namespace=None, parent=None, prefix=None):
         self.namespace = namespace
         self.parent = parent
-        self.name = xml_element.get('Name')
+        self.name = xml_element.get('Name') if prefix is None else f'{prefix}.{xml_element.get('Name')}'
         self.base_type = xml_element.get('BaseType')
         self.array_type = xml_element.get('ArrayType')
         self.length = xml_element.get('Length')
@@ -102,8 +115,8 @@ class SysmacDataType:
         return self
 
     @classmethod
-    def import_from_xml(cls, xml_element, namespace=None, parent=None):
-        return cls()._parse_xml(xml_element, namespace=namespace, parent=parent)
+    def import_from_xml(cls, xml_element, namespace=None, parent=None, prefix=None):
+        return cls()._parse_xml(xml_element, namespace=namespace, parent=parent, prefix=prefix)
 
     @classmethod
     def import_from_slwd(cls, slwd_dict, namespace=None, parent=None):
@@ -112,6 +125,10 @@ class SysmacDataType:
     @property
     def is_base_type(self):
         return self.base_type in BASE_TYPES
+
+    @property
+    def is_internal_type(self):
+        return self.base_type in INTERNAL_TYPES.keys()
 
     @property
     def is_array(self):

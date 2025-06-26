@@ -5,7 +5,7 @@ from itertools import product
 from typing import List
 
 
-from sysmac_data_type import SysmacDataType, BASE_TYPES
+from sysmac_data_type import SysmacDataType, BASE_TYPES, INTERNAL_TYPES
 
 
 @dataclass
@@ -54,6 +54,10 @@ class SysmacArray:
     @property
     def is_base_type(self):
         return self.base_type in BASE_TYPES
+
+    @property
+    def is_internal_type(self):
+        return self.base_type in INTERNAL_TYPES.keys()
 
     @property
     def dimensions(self) -> List[ArrayDimension]:
