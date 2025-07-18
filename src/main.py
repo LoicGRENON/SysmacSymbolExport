@@ -1,9 +1,11 @@
 import logging
 import queue
 import tkinter as tk
-from tkinter.filedialog import askdirectory
+from tkinter.messagebox import askyesno, showinfo
+from tkinter.filedialog import askdirectory, askopenfilename, asksaveasfilename
 from tkinter import ttk
 
+from settings_manager import SettingsManager
 from src import __version__, APP_NAME
 from ui import ProjectsTreeview
 from ui import StatusBar
@@ -28,6 +30,8 @@ class AppUi(tk.Tk):
         # Worker to handle time-consuming tasks in order to keep the UI responsive
         self.worker = WorkerThread(self.task_queue, self.result_queue)
         self.worker.start()
+
+        self.settings = SettingsManager()
 
         # UI
         if is_pyinstaller_bundle():
@@ -55,22 +59,22 @@ class AppUi(tk.Tk):
         self.projects_tv.bind('<<TreeviewSelect>>', self.on_project_tv_select)
         self.projects_tv.bind('<Double-1>', self.on_project_tv_double_click)
 
+        self.load_from_settings()
+
         content_frame.pack(fill=tk.BOTH, expand=True)
         main_frm.pack(fill=tk.BOTH, expand=True)
 
         self.__check_result_queue()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
-        # Schedule work for WorkerThread
-        command = 'get_solutions'
-        cmd_args = (self.path_entry_var.get(),)
-        self.task_queue.put((command, cmd_args))
-        self.status_bar.set_text(f'Looking for projects in {cmd_args}. Please wait ...')
-
     def add_menu_bar(self):
         menu_bar = tk.Menu(self)
 
         menu_file = tk.Menu(menu_bar, tearoff=0)
+        menu_file.add_command(label="Import settings", command=self.do_import_settings)
+        menu_file.add_command(label="Export settings", command=self.do_export_settings)
+        menu_file.add_command(label="Restore default settings", command=self.do_restore_settings)
+        menu_file.add_separator()
         menu_file.add_command(label="Exit", command=self.on_closing)
         menu_bar.add_cascade(label="File", menu=menu_file)
 
@@ -83,7 +87,7 @@ class AppUi(tk.Tk):
     def _add_path_frame(self, master):
         self.path_frm = ttk.Frame(master)
         self.path_entry_label = ttk.Label(self.path_frm, text="Solution path: ")
-        self.path_entry_var = tk.StringVar(value="C:\\OMRON\\Data\\Solution")
+        self.path_entry_var = tk.StringVar()
         self.path_entry = tk.Entry(self.path_frm, width=40, state='disabled', textvariable=self.path_entry_var)
         self.path_button = tk.Button(self.path_frm, text='Browse', command=self._path_button_cb)
         self.path_entry_label.grid(row=0, column=0)
@@ -101,7 +105,41 @@ class AppUi(tk.Tk):
                    f"Copyright © 2025 GRENON Loïc\n"
                    f"\n"
                    f"Follow on GitHub: https://github.com/LoicGRENON/SysmacSymbolExport")
-        tk.messagebox.showinfo(f"About {APP_NAME}", content)
+        showinfo(f"About {APP_NAME}", content)
+
+    def do_import_settings(self):
+        askopenfile_title = "Please choose the file you want to import the settings from"
+        askopenfile_filetypes = [('ini files', '.ini'), ('All files', '.*')]
+        import_filepath = askopenfilename(title=askopenfile_title, filetypes=askopenfile_filetypes)
+        if import_filepath:
+            self.settings.import_from(import_filepath)
+            self.load_from_settings()
+
+    def do_export_settings(self):
+        asksavefile_title = "Please choose a filename to save the settings on"
+        asksavefile_filetypes = [('ini files', '.ini'), ('All files', '.*')]
+        settings_filepath = asksaveasfilename(title=asksavefile_title,
+                                              filetypes=asksavefile_filetypes,
+                                              defaultextension='.ini')
+        if settings_filepath:
+            self.settings.export_to(settings_filepath)
+
+    def do_restore_settings(self):
+        title = 'Restore default settings'
+        msg = 'Are you sure you want to restore the settings to their default values ?'
+        answer = askyesno(title, msg, default='no')
+        if answer == 'yes':
+            self.settings.restore_default()
+            self.load_from_settings()
+
+    def load_from_settings(self):
+        self.path_entry_var.set(self.settings.get('general', 'solution_path'))
+
+        # Schedule work for WorkerThread
+        command = 'get_solutions'
+        cmd_args = (self.path_entry_var.get(),)
+        self.task_queue.put((command, cmd_args))
+        self.status_bar.set_text(f'Looking for projects in {cmd_args}. Please wait ...')
 
     def _path_button_cb(self):
         input_path = tk.filedialog.askdirectory(
@@ -113,10 +151,12 @@ class AppUi(tk.Tk):
 
             # Schedule work for WorkerThread
             command = 'get_solutions'
-            cmd_args = (self.path_entry_var.get(),)
+            cmd_args = (input_path,)
             self.task_queue.put((command, cmd_args))
 
-            self.status_bar.set_text(f'Looking for projects in {cmd_args}. Please wait ...')
+            self.status_bar.set_text(f'Looking for projects in {input_path}. Please wait ...')
+            self.settings.set('general', 'solution_path', input_path)
+            self.settings.save()
 
     def __check_result_queue(self):
         try:
