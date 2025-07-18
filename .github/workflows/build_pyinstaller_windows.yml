@@ -31,15 +31,12 @@ jobs:
         run: |
           pyinstaller SysmacSymbolExport.spec
 
-      - name: List build output (debug)
-        run: dir dist
-
       - name: Upload release asset
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/SysmacSymbolExport.exe
+            dist/SysmacSymbolExport*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
