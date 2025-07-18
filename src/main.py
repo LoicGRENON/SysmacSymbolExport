@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter.filedialog import askdirectory
 from tkinter import ttk
 
-from src import __version__
+from src import __version__, APP_NAME
 from ui import ProjectsTreeview
 from ui import StatusBar
 from ui import SymbolsDialog
@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 class AppUi(tk.Tk):
     def __init__(self):
         super(AppUi, self).__init__()
+
+        self.symbols_dialog = None
 
         # Queues
         self.task_queue = queue.Queue()
@@ -34,19 +36,27 @@ class AppUi(tk.Tk):
             iconbitmap = '../SysmacSymbolExport.ico'
         self.iconbitmap(iconbitmap)
         self.title(f"Sysmac global variables export - V{__version__}")
-        self.main_frm = ttk.Frame(self, padding=10)
-        self.symbols_dialog = None
+        self.minsize(500, 200)
+        self.add_menu_bar()
 
-        self._add_labels()
-        self._add_path_frame()
+        main_frm = ttk.Frame(self, padding=10)
+        content_frame = ttk.Frame(main_frm)
+        self.status_bar = StatusBar(main_frm)
 
-        self.projects_tv = ProjectsTreeview(self.main_frm)
+        label = ttk.Label(
+            content_frame,
+            text="Double-click on the line corresponding to the project from which you want to export them.\n"
+                 "NB: Only the variables published on the network can be exported (Network Publish=Publish only)."
+        )
+        label.pack(side=tk.TOP, fill=tk.BOTH)
+        self._add_path_frame(content_frame)
+
+        self.projects_tv = ProjectsTreeview(content_frame)
         self.projects_tv.bind('<<TreeviewSelect>>', self.on_project_tv_select)
         self.projects_tv.bind('<Double-1>', self.on_project_tv_double_click)
 
-        self.status_bar = StatusBar(self.main_frm)
-
-        self.main_frm.pack(fill=tk.BOTH, expand=True)
+        content_frame.pack(fill=tk.BOTH, expand=True)
+        main_frm.pack(fill=tk.BOTH, expand=True)
 
         self.__check_result_queue()
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
@@ -55,11 +65,23 @@ class AppUi(tk.Tk):
         command = 'get_solutions'
         cmd_args = (self.path_entry_var.get(),)
         self.task_queue.put((command, cmd_args))
-
         self.status_bar.set_text(f'Looking for projects in {cmd_args}. Please wait ...')
 
-    def _add_path_frame(self):
-        self.path_frm = ttk.Frame(self.main_frm)
+    def add_menu_bar(self):
+        menu_bar = tk.Menu(self)
+
+        menu_file = tk.Menu(menu_bar, tearoff=0)
+        menu_file.add_command(label="Exit", command=self.on_closing)
+        menu_bar.add_cascade(label="File", menu=menu_file)
+
+        menu_help = tk.Menu(menu_bar, tearoff=0)
+        menu_help.add_command(label="About", command=self.do_about)
+        menu_bar.add_cascade(label="Help", menu=menu_help)
+
+        self.config(menu=menu_bar)
+
+    def _add_path_frame(self, master):
+        self.path_frm = ttk.Frame(master)
         self.path_entry_label = ttk.Label(self.path_frm, text="Solution path: ")
         self.path_entry_var = tk.StringVar(value="C:\\OMRON\\Data\\Solution")
         self.path_entry = tk.Entry(self.path_frm, width=40, state='disabled', textvariable=self.path_entry_var)
@@ -68,6 +90,18 @@ class AppUi(tk.Tk):
         self.path_entry.grid(row=0, column=1)
         self.path_button.grid(row=0, column=2, padx=5)
         self.path_frm.pack(fill=tk.BOTH, pady=10)
+
+    def do_about(self):
+        desc = "This application allows you to export global variables from OMRON Sysmac Studio projects."
+        content = (f"{APP_NAME}\n"
+                   f"\n"
+                   f"{desc}\n"
+                   f"\n"
+                   f"Version {__version__}\n"
+                   f"Copyright © 2025 GRENON Loïc\n"
+                   f"\n"
+                   f"Follow on GitHub: https://github.com/LoicGRENON/SysmacSymbolExport")
+        tk.messagebox.showinfo(f"About {APP_NAME}", content)
 
     def _path_button_cb(self):
         input_path = tk.filedialog.askdirectory(
@@ -106,16 +140,6 @@ class AppUi(tk.Tk):
             pass
         # Schedule another call after 100ms
         self.after(100, self.__check_result_queue)
-
-    def _add_labels(self):
-        label = ttk.Label(
-            self.main_frm,
-            text="This application allows you to export the global variables from a OMRON Sysmac® Studio project.\n"
-                 "Double-click on the line corresponding to the project "
-                 "from which you want to export them.\n\n"
-                 "NB: Only the variables published on the network can be exported (Network Publish=Publish only)."
-        )
-        label.pack(side=tk.TOP, fill=tk.BOTH)
 
     def on_closing(self):
         self.task_queue.put(("stop", None))
