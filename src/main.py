@@ -11,7 +11,7 @@ from ui import ProjectsTreeview
 from ui import StatusBar
 from ui import SymbolsDialog
 from ui import WorkerThread
-from utils import is_pyinstaller_bundle, resource_path
+from utils import resource_path
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class AppUi(tk.Tk):
         self.settings = SettingsManager()
 
         # UI
-        if is_pyinstaller_bundle():
+        if "__compiled__" in globals():
             iconbitmap = resource_path('SysmacSymbolExport.ico')
         else:
             iconbitmap = '../SysmacSymbolExport.ico'

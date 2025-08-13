@@ -25,18 +25,29 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pyinstaller
 
-      - name: Build executable with PyInstaller
+      - name: Read version
+        id: get_version
         run: |
-          pyinstaller SysmacSymbolExport.spec
+          python -c 'from src import __version__; print(f"app_version={__version__}")' >> $env:GITHUB_OUTPUT
+
+      - uses: Nuitka/Nuitka-Action@main
+        with:
+          nuitka-version: main
+          script-name: src/main.py
+          mode: onefile
+          enable-plugins: tk-inter
+          include-data-files: SysmacSymbolExport.ico=SysmacSymbolExport.ico
+          windows-console-mode: attach
+          windows-icon-from-ico: SysmacSymbolExport.ico
+          output-file: SysmacSymbolExport-v${{ steps.get_version.outputs.app_version }}.exe
 
       - name: Upload release asset
         if: github.event_name == 'release'
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            dist/SysmacSymbolExport*.exe
+            build/SysmacSymbolExport*.exe
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -44,5 +55,5 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
-          name: SysmacSymbolExport.exe
-          path: dist/SysmacSymbolExport.exe
+          name: SysmacSymbolExport-v${{ steps.get_version.outputs.app_version }}
+          path: build/SysmacSymbolExport*.exe

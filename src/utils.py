@@ -25,8 +25,6 @@ def export_symbols_to_file(symbols, filename):
         writer.writeheader()
         writer.writerows(symbols_data)
 
-def is_pyinstaller_bundle():
-    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 def get_struct_from_namespace(xml_root: ET.Element, namespace: str):
     data = {}
@@ -69,6 +67,6 @@ def parse_slwd(file_path) -> List[Dict[str, str]]:
     return variables
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, mandatory for PyInstaller in one-file mode bundle """
+    """ Get absolute path to resource, mandatory for one-file mode bundle """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
