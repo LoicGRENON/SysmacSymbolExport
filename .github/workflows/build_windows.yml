@@ -36,11 +36,18 @@ jobs:
           nuitka-version: main
           script-name: src/main.py
           mode: onefile
+          onefile-no-compression: true
           enable-plugins: tk-inter
           include-data-files: SysmacSymbolExport.ico=SysmacSymbolExport.ico
           windows-console-mode: attach
           windows-icon-from-ico: SysmacSymbolExport.ico
           output-file: SysmacSymbolExport-v${{ steps.get_version.outputs.app_version }}.exe
+          company-name: Loïc GRENON
+          product-name: SysmacSymbolExport
+          product-version: ${{ steps.get_version.outputs.app_version }}
+          file-version: ${{ steps.get_version.outputs.app_version }}
+          file-description: A tool to export global variables from OMRON Sysmac Studio projects
+          copyright: 2025 - Loïc GRENON
 
       - name: Upload release asset
         if: github.event_name == 'release'
