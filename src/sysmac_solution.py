@@ -66,7 +66,9 @@ class SysmacSolution:
         # When the symbols are from base type, they are added to base_type_symbols list
         # Custom type symbols are added to user_type_symbols list to be expanded later on.
         for s in self.global_vars:
-            if not s.network_publish or s.network_publish != 'PublicationOnly':
+            if not s.network_publish:
+                continue
+            if s.network_publish not in ['PublicationOnly', 'PublicationInput', 'PublicationOutput']:
                 continue
 
             if s.is_base_type:
